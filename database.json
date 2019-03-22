@@ -1,0 +1,25 @@
+{"categories":["food","sleeping","bathroom","cleaning","temperature","emergency","transportation"],
+"food":{"categories":["cook","eat","store"],
+        "cook":"The cookware is under the cooker.",
+        "eat": "Snacks are in the pantry, ingredients too.",
+        "store": "You can store food in the fridge near the pantry or in the freezer in the storage room."
+      },
+"sleeping":{"categories":null,
+            "sleeping":"Beddings are under the bed."
+          },
+"bathroom":{"categories":null,
+            "bathroom":"Everything is in the bathroom."
+          },
+"cleaning":{"categories":null,
+            "cleaning":"Everything is in the bathroom."
+          },
+"temperature":{"categories":null,
+            "temperature":"You can cool the house by opening the windows."
+          },
+"emergency":{"categories":null,
+            "emergency":"Life is hard, man."
+          },
+"transportation":{"categories":null,
+            "transportation":"Save the planet by walking."
+          }
+}

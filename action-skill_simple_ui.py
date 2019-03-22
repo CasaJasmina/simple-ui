@@ -29,9 +29,9 @@ class SimpleUI(object):
         self.start_blocking()
 
     # --> Sub callback function, one per intent
-    def askHelp_callback(self, hermes, intent_message):
+    def whereIs_callback(self, hermes, intent_message):
         # terminate the session first if not continue
-        good_category = ["food","night","sleep","clean";"cleaning stuff"]c#requests.get("https://api.chucknorris.io/jokes/categories").json()
+        good_category = ["food","sleeping","cleaning","temperature","bathroom","emergency"] #requests.get("https://api.chucknorris.io/jokes/categories").json()
         category = None
         if intent_message.slots:
             category = intent_message.slots.category.first().value
@@ -40,15 +40,26 @@ class SimpleUI(object):
                 category = None
 
         if category is None:
-            Answer = "User, What can I help you with?"
+            Answer = "Sorry I didn't understand."
         else:
-            Answer = "You asked for "+category #str(requests.get("https://api.chucknorris.io/jokes/random?category={}".format(category)).json().get("value"))
+	    subcategory = ["cook","eat","store"]
+            Answer = "You asked for "+category+", Do you want to "+", ".join(subcategory)+" "category+"?" #str(requests.get("https://api.chucknorris.io/jokes/random?category={}".format(category)).json().get("value"))
 
-        user =  self.config.get("secret").get("Name")
+        user =  self.config.get("secret").get("name")
         if user is not None and user is not "":
             Answer = Answer.replace('User', user)
 
-        hermes.publish_end_session(intent_message.session_id, Answer)
+        hermes.publish_continue_session(intent_message.session_id, ["casajasmina:food","casajasmina:sleeping","casajasmina:cleaning"])
+
+    def askHelp_callback(self, hermes, intent_message):
+        #Answer = "Hey User, I'm here for you. I can help you with food, sleeping, bathroom, temperature, cleaning, emergency."
+	good_category = ["food","sleeping","cleaning","temperature","bathroom","emergency"] #requests.get("https://api.chucknorris.io/jokes/categories").json()
+       	Answer = "Hey User, I'm here for you. I can help you with "+", ".join(good_category)
+        user =  self.config.get("secret").get("name")
+        if user is not None and user is not "":
+            Answer = Answer.replace('User', user)
+
+        hermes.publish_continue_session(intent_message.session_id, Answer,["casajasmina:WhereIs"])
 
     # More callback function goes here...
 
@@ -56,8 +67,9 @@ class SimpleUI(object):
     def master_intent_callback(self,hermes, intent_message):
         coming_intent = intent_message.intent.intent_name
         if coming_intent == 'casajasmina:WhereIs':
+            self.whereIs_callback(hermes, intent_message)
+	elif coming_intent == 'casajasmina:ConnectMe':
             self.askHelp_callback(hermes, intent_message)
-
         # more callback and if condition goes here...
 
     # --> Register callback function and start MQTT
