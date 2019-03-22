@@ -27,11 +27,26 @@ class SimpleUI(object):
 
         # start listening to MQTT
         self.start_blocking()
+    def food_callback(self, hermes, intent_message):
+        # terminate the session first if not continue
+        good_category = requests.get("https://raw.githubusercontent.com/CasaJasmina/simple-ui/master/database.json").json().get("food").get("categories")
+        category = None
+        if intent_message.slots:
+            category = intent_message.slots.category.first().value
+            if category.encode("utf-8") not in good_category:
+                category = None
+
+        if category is None:
+            Answer = "Sorry I didn't understand. Say "+", ".join(good_category)+" to get help."
+            hermes.publish_continue_session(intent_message.session_id,Answer, ["casajasmina:Food"])
+        else:
+            Answer = str(requests.get("https://raw.githubusercontent.com/CasaJasmina/simple-ui/master/database.json").json().get("food").get(category))
+            hermes.publish_end_session(intent_message.session_id,Answer)
 
     # --> Sub callback function, one per intent
     def whereIs_callback(self, hermes, intent_message):
         # terminate the session first if not continue
-        good_category = ["food","sleeping","cleaning","temperature","bathroom","emergency"] #requests.get("https://api.chucknorris.io/jokes/categories").json()
+        good_category = requests.get("https://raw.githubusercontent.com/CasaJasmina/simple-ui/master/database.json").json().get("categories")
         category = None
         if intent_message.slots:
             category = intent_message.slots.category.first().value
@@ -40,20 +55,21 @@ class SimpleUI(object):
                 category = None
 
         if category is None:
-            Answer = "Sorry I didn't understand."
+            Answer = "Sorry I didn't understand. Say "+", ".join(good_category)+" to get help."
+            hermes.publish_continue_session(intent_message.session_id,Answer, ["casajasmina:WhereIs"])
         else:
-	    subcategory = ["cook","eat","store"]
-            Answer = "You asked for "+category+", Do you want to "+", ".join(subcategory)+" "category+"?" #str(requests.get("https://api.chucknorris.io/jokes/random?category={}".format(category)).json().get("value"))
+	    subcategory = requests.get("https://raw.githubusercontent.com/CasaJasmina/simple-ui/master/database.json").json().get(category).get("categories")
+	    if subcategory is None:
+	        Answer = requests.get("https://raw.githubusercontent.com/CasaJasmina/simple-ui/master/database.json").json().get(category).get(category)
+      	        hermes.publish_end_session(intent_message.session_id,Answer)
+            else:
+                Answer = "You asked for "+category+", Do you want to "+", ".join(subcategory)+" "+category+"?"
+                hermes.publish_continue_session(intent_message.session_id,Answer, ["casajasmina:Food","casajasmina:sleeping","casajasmina:cleaning"])
 
-        user =  self.config.get("secret").get("name")
-        if user is not None and user is not "":
-            Answer = Answer.replace('User', user)
-
-        hermes.publish_continue_session(intent_message.session_id, ["casajasmina:food","casajasmina:sleeping","casajasmina:cleaning"])
 
     def askHelp_callback(self, hermes, intent_message):
         #Answer = "Hey User, I'm here for you. I can help you with food, sleeping, bathroom, temperature, cleaning, emergency."
-	good_category = ["food","sleeping","cleaning","temperature","bathroom","emergency"] #requests.get("https://api.chucknorris.io/jokes/categories").json()
+	good_category = requests.get("https://raw.githubusercontent.com/CasaJasmina/simple-ui/master/database.json").json().get("categories")
        	Answer = "Hey User, I'm here for you. I can help you with "+", ".join(good_category)
         user =  self.config.get("secret").get("name")
         if user is not None and user is not "":
@@ -70,6 +86,8 @@ class SimpleUI(object):
             self.whereIs_callback(hermes, intent_message)
 	elif coming_intent == 'casajasmina:ConnectMe':
             self.askHelp_callback(hermes, intent_message)
+	elif coming_intent == 'casajasmina:Food':
+            self.food_callback(hermes, intent_message)
         # more callback and if condition goes here...
 
     # --> Register callback function and start MQTT
