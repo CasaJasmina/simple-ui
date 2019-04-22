@@ -19,17 +19,18 @@ databaseurl = ""
 class SimpleUI(object):
 
     def __init__(self):
-        # get the configuration if needed
+        # get the configuration
         try:
+            global databaseurl
             self.config = SnipsConfigParser.read_configuration_file(CONFIG_INI)
-	    self.config.get("secret").get("databaseUrl")
+	        databaseurl = self.config.get("secret").get("database")
         except :
             self.config = None
 
         # start listening to MQTT
         self.start_blocking()
     def food_callback(self, hermes, intent_message):
-        # terminate the session first if not continue
+        global databaseurl
         good_category = requests.get(databaseurl).json().get("food").get("categories")
         category = None
         if intent_message.slots:
@@ -44,14 +45,13 @@ class SimpleUI(object):
             Answer = str(requests.get(databaseurl).json().get("food").get(category))
             hermes.publish_end_session(intent_message.session_id,Answer)
 
-    # --> Sub callback function, one per intent
+
     def whereIs_callback(self, hermes, intent_message):
-        # terminate the session first if not continue
+        global databaseurl
         good_category = requests.get(databaseurl).json().get("categories")
         category = None
         if intent_message.slots:
             category = intent_message.slots.category.first().value
-            # check if the category is valide
             if category.encode("utf-8") not in good_category:
                 category = None
 
@@ -69,8 +69,8 @@ class SimpleUI(object):
 
 
     def askHelp_callback(self, hermes, intent_message):
-        #Answer = "Hey User, I'm here for you. I can help you with food, sleeping, bathroom, temperature, cleaning, emergency."
-	good_category = requests.get(databaseurl).json().get("categories")
+        global databaseurl
+	    good_category = requests.get(databaseurl).json().get("categories")
        	Answer = "Hey User, I'm here for you. I can help you with "+", ".join(good_category)
         user =  self.config.get("secret").get("name")
         if user is not None and user is not "":
@@ -78,16 +78,13 @@ class SimpleUI(object):
 
         hermes.publish_continue_session(intent_message.session_id, Answer,["casajasmina:WhereIs"])
 
-    # More callback function goes here...
-
-    # --> Master callback function, triggered everytime an intent is recognized
     def master_intent_callback(self,hermes, intent_message):
         coming_intent = intent_message.intent.intent_name
         if coming_intent == 'casajasmina:WhereIs':
             self.whereIs_callback(hermes, intent_message)
-	elif coming_intent == 'casajasmina:ConnectMe':
+	    elif coming_intent == 'casajasmina:ConnectMe':
             self.askHelp_callback(hermes, intent_message)
-	elif coming_intent == 'casajasmina:Food':
+	    elif coming_intent == 'casajasmina:Food':
             self.food_callback(hermes, intent_message)
         # more callback and if condition goes here...
 

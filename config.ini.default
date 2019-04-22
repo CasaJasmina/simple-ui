@@ -3,4 +3,4 @@
 [secret]
 #empty value for secret values
 name = Bruce
-databaseUrl = "localhost:1880/simpleuidb"
+database = "localhost:1880/simpleuidb"
