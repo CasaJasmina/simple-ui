@@ -15,13 +15,14 @@ CONFIG_INI = "config.ini"
 MQTT_IP_ADDR = "localhost"
 MQTT_PORT = 1883
 MQTT_ADDR = "{}:{}".format(MQTT_IP_ADDR, str(MQTT_PORT))
-
+databaseurl = ""
 class SimpleUI(object):
 
     def __init__(self):
         # get the configuration if needed
         try:
             self.config = SnipsConfigParser.read_configuration_file(CONFIG_INI)
+	    self.config.get("secret").get("databaseUrl")
         except :
             self.config = None
 
@@ -29,7 +30,7 @@ class SimpleUI(object):
         self.start_blocking()
     def food_callback(self, hermes, intent_message):
         # terminate the session first if not continue
-        good_category = requests.get("https://raw.githubusercontent.com/CasaJasmina/simple-ui/master/database.json").json().get("food").get("categories")
+        good_category = requests.get(databaseurl).json().get("food").get("categories")
         category = None
         if intent_message.slots:
             category = intent_message.slots.category.first().value
@@ -40,13 +41,13 @@ class SimpleUI(object):
             Answer = "Sorry I didn't understand. Say "+", ".join(good_category)+" to get help."
             hermes.publish_continue_session(intent_message.session_id,Answer, ["casajasmina:Food"])
         else:
-            Answer = str(requests.get("https://raw.githubusercontent.com/CasaJasmina/simple-ui/master/database.json").json().get("food").get(category))
+            Answer = str(requests.get(databaseurl).json().get("food").get(category))
             hermes.publish_end_session(intent_message.session_id,Answer)
 
     # --> Sub callback function, one per intent
     def whereIs_callback(self, hermes, intent_message):
         # terminate the session first if not continue
-        good_category = requests.get("https://raw.githubusercontent.com/CasaJasmina/simple-ui/master/database.json").json().get("categories")
+        good_category = requests.get(databaseurl).json().get("categories")
         category = None
         if intent_message.slots:
             category = intent_message.slots.category.first().value
@@ -58,9 +59,9 @@ class SimpleUI(object):
             Answer = "Sorry I didn't understand. Say "+", ".join(good_category)+" to get help."
             hermes.publish_continue_session(intent_message.session_id,Answer, ["casajasmina:WhereIs"])
         else:
-	    subcategory = requests.get("https://raw.githubusercontent.com/CasaJasmina/simple-ui/master/database.json").json().get(category).get("categories")
+	    subcategory = requests.get(databaseurl).json().get(category).get("categories")
 	    if subcategory is None:
-	        Answer = requests.get("https://raw.githubusercontent.com/CasaJasmina/simple-ui/master/database.json").json().get(category).get(category)
+	        Answer = requests.get(databaseurl).json().get(category).get(category)
       	        hermes.publish_end_session(intent_message.session_id,Answer)
             else:
                 Answer = "You asked for "+category+", Do you want to "+", ".join(subcategory)+" "+category+"?"
@@ -69,7 +70,7 @@ class SimpleUI(object):
 
     def askHelp_callback(self, hermes, intent_message):
         #Answer = "Hey User, I'm here for you. I can help you with food, sleeping, bathroom, temperature, cleaning, emergency."
-	good_category = requests.get("https://raw.githubusercontent.com/CasaJasmina/simple-ui/master/database.json").json().get("categories")
+	good_category = requests.get(databaseurl).json().get("categories")
        	Answer = "Hey User, I'm here for you. I can help you with "+", ".join(good_category)
         user =  self.config.get("secret").get("name")
         if user is not None and user is not "":
