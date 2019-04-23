@@ -1,6 +1,2 @@
-# no section for preset values
-
 [secret]
-#empty value for secret values
-name = Bruce
-database = "localhost:1880/simpleuidb"
+database = "http://localhost:1880/simpleuidb"

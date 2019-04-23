@@ -15,7 +15,7 @@ CONFIG_INI = "config.ini"
 MQTT_IP_ADDR = "localhost"
 MQTT_PORT = 1883
 MQTT_ADDR = "{}:{}".format(MQTT_IP_ADDR, str(MQTT_PORT))
-databaseurl = ""
+databaseurl = "" #http rest url from config.ini
 
 
 class SimpleUI(object):
@@ -31,13 +31,14 @@ class SimpleUI(object):
 
         # start listening to MQTT
         self.start_blocking()
-
+#callback for food intent, use it as a template for subcategory intents
     def food_callback(self, hermes, intent_message):
         global databaseurl
+        #get categories from database
         good_category = requests.get(
             databaseurl).json().get("food").get("categories")
         category = None
-        if intent_message.slots:
+        if intent_message.slots: #check is user request match subcategory
             category = intent_message.slots.category.first().value
             if category.encode("utf-8") not in good_category:
                 category = None
@@ -48,10 +49,12 @@ class SimpleUI(object):
             hermes.publish_continue_session(
                 intent_message.session_id, Answer, ["casajasmina:Food"])
         else:
+            #get the answer from the database
             Answer = str(requests.get(
                 databaseurl).json().get("food").get(category))
             hermes.publish_end_session(intent_message.session_id, Answer)
 
+#emergency callback is identical to food callback
     def emergency_callback(self, hermes, intent_message):
         global databaseurl
         good_category = requests.get(databaseurl).json().get(
@@ -72,10 +75,13 @@ class SimpleUI(object):
                 "emergency").get(category))
             hermes.publish_end_session(intent_message.session_id, Answer)
 
+#generic callback for every category in the database, handles single and multi category topics
     def whereIs_callback(self, hermes, intent_message):
         global databaseurl
+        #get categories from database
         good_category = requests.get(databaseurl).json().get("categories")
         category = None
+        #handling user request
         if intent_message.slots:
             category = intent_message.slots.category.first().value
             if category.encode("utf-8") not in good_category:
@@ -87,6 +93,7 @@ class SimpleUI(object):
             hermes.publish_continue_session(
                 intent_message.session_id, Answer, ["casajasmina:WhereIs"])
         else:
+            #get subcategory
             subcategory = requests.get(databaseurl).json().get(
                 category).get("categories")
             if subcategory is None:
@@ -94,23 +101,28 @@ class SimpleUI(object):
                     category).get(category)
                 action_url = requests.get(
                     databaseurl).json().get(category).get("url")
+                #call an action if specified
                 if action_url is not None:
                     requests.get(action_url)
                 hermes.publish_end_session(intent_message.session_id, Answer)
             else:
+                #multi category handling
                 Answer = "You asked for " + category + \
                     ", I can give you tips on " + ", ".join(subcategory)
                 hermes.publish_continue_session(intent_message.session_id, Answer, [
                                                 "casajasmina:Food", "casajasmina:emergency"])
 
+#first interaction callback
     def askHelp_callback(self, hermes, intent_message):
         global databaseurl
+        #get categories from database
         good_category = requests.get(databaseurl).json().get("categories")
-        Answer = "Hey User, I'm here for you. I can help you with " + \
+        Answer = "Hey friend, I'm here for you. I can help you with " + \
             ", ".join(good_category)
-        user = self.config.get("secret").get("name")
+        #get user name from database
+        user = requests.get(databaseurl).json().get("user")
         if user is not None and user is not "":
-            Answer = Answer.replace('User', user)
+            Answer = Answer.replace('firend', user)
 
         hermes.publish_continue_session(
             intent_message.session_id, Answer, ["casajasmina:WhereIs"])
