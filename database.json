@@ -16,10 +16,12 @@
 "temperature":{"categories":null,
             "temperature":"You can cool the house by opening the windows."
           },
-"emergency":{"categories":null,
-            "emergency":"Life is hard, man."
+"emergency":{"categories":["host","first aid","emergency"],
+            "emergency":"The emergency telephone number is 112.",
+            "first aid":"First Aid kit is in the bathroom.",
+            "host":"Contacting the host."
           },
 "transportation":{"categories":null,
-            "transportation":"Save the planet by walking."
+            "transportation":"Check the dashboard to find the tourist guide, we are close to taxis and underground station"
           }
 }

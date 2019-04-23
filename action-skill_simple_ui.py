@@ -45,6 +45,22 @@ class SimpleUI(object):
             Answer = str(requests.get(databaseurl).json().get("food").get(category))
             hermes.publish_end_session(intent_message.session_id,Answer)
 
+    def emergency_callback(self, hermes, intent_message):
+        global databaseurl
+        good_category = requests.get(databaseurl).json().get("emergency").get("categories")
+        category = None
+        if intent_message.slots:
+            category = intent_message.slots.category.first().value
+            if category.encode("utf-8") not in good_category:
+                category = None
+
+        if category is None:
+            Answer = "Sorry I didn't understand. Say "+", ".join(good_category)+" to get help."
+            hermes.publish_continue_session(intent_message.session_id,Answer, ["casajasmina:emergency"])
+        else:
+            Answer = str(requests.get(databaseurl).json().get("emergency").get(category))
+            hermes.publish_end_session(intent_message.session_id,Answer)
+
 
     def whereIs_callback(self, hermes, intent_message):
         global databaseurl
@@ -62,10 +78,13 @@ class SimpleUI(object):
 	    subcategory = requests.get(databaseurl).json().get(category).get("categories")
 	    if subcategory is None:
 	        Answer = requests.get(databaseurl).json().get(category).get(category)
+            action_url = requests.get(databaseurl).json().get(category).get("url")
+                if action_url is not None:
+                    requests.get(action_url)
       	        hermes.publish_end_session(intent_message.session_id,Answer)
             else:
                 Answer = "You asked for "+category+", Do you want to "+", ".join(subcategory)+" "+category+"?"
-                hermes.publish_continue_session(intent_message.session_id,Answer, ["casajasmina:Food","casajasmina:sleeping","casajasmina:cleaning"])
+                hermes.publish_continue_session(intent_message.session_id,Answer, ["casajasmina:Food","casajasmina:emergency"])
 
 
     def askHelp_callback(self, hermes, intent_message):
@@ -86,6 +105,8 @@ class SimpleUI(object):
             self.askHelp_callback(hermes, intent_message)
 	    elif coming_intent == 'casajasmina:Food':
             self.food_callback(hermes, intent_message)
+        elif coming_intent == 'casajasmina:emergency':
+            self.emergency_callback(hermes, intent_message)
         # more callback and if condition goes here...
 
     # --> Register callback function and start MQTT
